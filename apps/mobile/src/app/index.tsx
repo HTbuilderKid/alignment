@@ -1,15 +1,47 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Redirect } from "expo-router";
+import { useSQLiteContext } from "expo-sqlite";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-export default function HomeScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Alignment</Text>
+import { getUserDirection } from "../database/userDirectionRepository";
 
-      <Text style={styles.subtitle}>
-        Do what you said you'd do.
-      </Text>
-    </View>
-  );
+type Destination = "/onboarding" | "/today" | null;
+
+export default function IndexScreen() {
+  const db = useSQLiteContext();
+
+  const [destination, setDestination] =
+    useState<Destination>(null);
+
+  useEffect(() => {
+    async function checkUserDirection() {
+      const direction = await getUserDirection(db);
+
+      if (direction) {
+        setDestination("/today");
+      } else {
+        setDestination("/onboarding");
+      }
+    }
+
+    checkUserDirection();
+  }, [db]);
+
+  if (!destination) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.logo}>Alignment</Text>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  return <Redirect href={destination} />;
 }
 
 const styles = StyleSheet.create({
@@ -17,17 +49,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
+    gap: 24,
   },
 
-  title: {
-    fontSize: 36,
+  logo: {
+    fontSize: 32,
     fontWeight: "700",
-  },
-
-  subtitle: {
-    marginTop: 12,
-    fontSize: 18,
-    textAlign: "center",
   },
 });
