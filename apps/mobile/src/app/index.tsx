@@ -1,6 +1,7 @@
 import { Redirect } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
+
 import {
   ActivityIndicator,
   StyleSheet,
@@ -8,9 +9,15 @@ import {
   View,
 } from "react-native";
 
-import { getUserDirection } from "../database/userDirectionRepository";
+import {
+  getUserDirection,
+} from "../database/userDirectionRepository";
 
-type Destination = "/onboarding" | "/today" | null;
+type Destination =
+  | "/onboarding"
+  | "/direction-setup"
+  | "/today"
+  | null;
 
 export default function IndexScreen() {
   const db = useSQLiteContext();
@@ -19,29 +26,46 @@ export default function IndexScreen() {
     useState<Destination>(null);
 
   useEffect(() => {
-    async function checkUserDirection() {
-      const direction = await getUserDirection(db);
+    async function determineDestination() {
+      const direction =
+        await getUserDirection(db);
 
-      if (direction) {
-        setDestination("/today");
-      } else {
+      if (!direction) {
         setDestination("/onboarding");
+        return;
       }
+
+      if (!direction.modelConfirmedAt) {
+        setDestination(
+          "/direction-setup"
+        );
+
+        return;
+      }
+
+      setDestination("/today");
     }
 
-    checkUserDirection();
+    determineDestination();
   }, [db]);
 
   if (!destination) {
     return (
       <View style={styles.container}>
-        <Text style={styles.logo}>Alignment</Text>
-        <ActivityIndicator size="large" />
+        <Text style={styles.logo}>
+          Alignment
+        </Text>
+
+        <ActivityIndicator
+          size="large"
+        />
       </View>
     );
   }
 
-  return <Redirect href={destination} />;
+  return (
+    <Redirect href={destination} />
+  );
 }
 
 const styles = StyleSheet.create({

@@ -1,6 +1,20 @@
-import { useRouter } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
-import { useEffect, useState } from "react";
+import type {
+  UserDirection,
+} from "@alignment/types";
+
+import {
+  useRouter,
+} from "expo-router";
+
+import {
+  useSQLiteContext,
+} from "expo-sqlite";
+
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   Pressable,
   StyleSheet,
@@ -8,15 +22,18 @@ import {
   View,
 } from "react-native";
 
-import { getUserDirection } from "../database/userDirectionRepository";
-import type { UserDirection } from "../types/userDirection";
+import {
+  getUserDirection,
+} from "../database/userDirectionRepository";
 
 export default function TodayScreen() {
   const router = useRouter();
   const db = useSQLiteContext();
 
   const [direction, setDirection] =
-    useState<UserDirection | null>(null);
+    useState<UserDirection | null>(
+      null
+    );
 
   useEffect(() => {
     async function loadDirection() {
@@ -31,15 +48,25 @@ export default function TodayScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.eyebrow}>YOUR DIRECTION</Text>
+      <Text style={styles.eyebrow}>
+        TODAY
+      </Text>
 
       <Text style={styles.title}>
-        What you're working toward
+        Alignment
+      </Text>
+
+      <Text style={styles.sectionLabel}>
+        WHAT YOU'RE WORKING TOWARD
       </Text>
 
       {direction ? (
         <View style={styles.card}>
-          <Text style={styles.statement}>
+          <Text
+            style={
+              styles.statement
+            }
+          >
             {direction.statement}
           </Text>
         </View>
@@ -50,11 +77,34 @@ export default function TodayScreen() {
       )}
 
       <Pressable
-        style={styles.editButton}
-        onPress={() => router.push("/onboarding")}
+        style={styles.primaryButton}
+        onPress={() =>
+          router.push("/compass")
+        }
       >
-        <Text style={styles.editButtonText}>
-          Change my direction
+        <Text
+          style={
+            styles.primaryButtonText
+          }
+        >
+          Open Compass
+        </Text>
+      </Pressable>
+
+      <Pressable
+        style={styles.secondaryButton}
+        onPress={() =>
+          router.push(
+            "/onboarding"
+          )
+        }
+      >
+        <Text
+          style={
+            styles.secondaryButtonText
+          }
+        >
+          Change my overall direction
         </Text>
       </Pressable>
     </View>
@@ -74,14 +124,22 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.5,
     color: "#666",
-    marginBottom: 14,
   },
 
   title: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: "700",
     color: "#111",
-    marginBottom: 28,
+    marginTop: 8,
+    marginBottom: 36,
+  },
+
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    color: "#777",
+    marginBottom: 12,
   },
 
   card: {
@@ -91,8 +149,8 @@ const styles = StyleSheet.create({
   },
 
   statement: {
-    fontSize: 19,
-    lineHeight: 29,
+    fontSize: 18,
+    lineHeight: 28,
     color: "#111",
   },
 
@@ -101,14 +159,31 @@ const styles = StyleSheet.create({
     color: "#777",
   },
 
-  editButton: {
-    marginTop: 24,
-    alignSelf: "flex-start",
+  primaryButton: {
+    minHeight: 56,
+    borderRadius: 16,
+    backgroundColor: "#111",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 28,
   },
 
-  editButtonText: {
-    fontSize: 16,
+  primaryButtonText: {
+    fontSize: 17,
     fontWeight: "600",
-    color: "#333",
+    color: "#fff",
+  },
+
+  secondaryButton: {
+    minHeight: 52,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+  },
+
+  secondaryButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#444",
   },
 });
