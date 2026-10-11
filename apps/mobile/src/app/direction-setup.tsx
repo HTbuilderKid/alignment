@@ -31,6 +31,10 @@ import {
   saveConfirmedDirectionModel,
 } from "../database/directionModelRepository";
 
+import {
+  analyzeDirection,
+} from "../services/directionApi";
+
 type DraftRow = {
   id: number;
   title: string;
@@ -71,6 +75,16 @@ export default function DirectionSetupScreen() {
 
   const [saving, setSaving] =
     useState(false);
+
+  const [analyzing, setAnalyzing] =
+    useState(false);
+
+  const [
+    analysisError,
+    setAnalysisError,
+  ] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     async function load() {
@@ -186,6 +200,71 @@ export default function DirectionSetupScreen() {
     }
   }
 
+  async function handleAnalyze() {
+    if (
+      analyzing ||
+      !statement.trim()
+    ) {
+      return;
+    }
+
+    setAnalyzing(true);
+    setAnalysisError(null);
+
+    try {
+      const analysis =
+        await analyzeDirection(
+          statement
+        );
+
+      const towardItems =
+        analysis.items
+          .filter(
+            (item) =>
+              item.kind ===
+              "toward"
+          )
+          .map((item) =>
+            createDraft(
+              item.title
+            )
+          );
+
+      const reduceItems =
+        analysis.items
+          .filter(
+            (item) =>
+              item.kind ===
+              "reduce"
+          )
+          .map((item) =>
+            createDraft(
+              item.title
+            )
+          );
+
+      setToward(
+        towardItems.length > 0
+          ? towardItems
+          : [createDraft()]
+      );
+
+      setReduce(
+        reduceItems.length > 0
+          ? reduceItems
+          : [createDraft()]
+      );
+    } catch (error) {
+      console.error(error);
+
+      setAnalysisError(
+        "Alignment couldn't organize your direction automatically. You can still enter it manually."
+      );
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
   const validCount =
     toward.filter(
       (item) =>
@@ -287,6 +366,54 @@ export default function DirectionSetupScreen() {
           >
             {statement}
           </Text>
+        </View>
+
+        <View style={styles.aiSection}>
+          <Text style={styles.aiTitle}>
+            Let Alignment organize this
+          </Text>
+
+          <Text
+            style={
+              styles.aiDescription
+            }
+          >
+            Alignment can turn what you wrote
+            into a few suggested directions.
+            Nothing is saved until you review
+            and confirm it.
+          </Text>
+
+          <Pressable
+            style={[
+              styles.analyzeButton,
+
+              analyzing &&
+                styles.disabledButton,
+            ]}
+            disabled={analyzing}
+            onPress={handleAnalyze}
+          >
+            <Text
+              style={
+                styles.analyzeButtonText
+              }
+            >
+              {analyzing
+                ? "Understanding..."
+                : "Suggest from what I wrote"}
+            </Text>
+          </Pressable>
+
+          {analysisError && (
+            <Text
+              style={
+                styles.errorText
+              }
+            >
+              {analysisError}
+            </Text>
+          )}
         </View>
 
         <DirectionSection
@@ -521,6 +648,50 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 26,
     color: "#111",
+  },
+
+  aiSection: {
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 18,
+    marginBottom: 36,
+  },
+
+  aiTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111",
+    marginBottom: 6,
+  },
+
+  aiDescription: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#666",
+    marginBottom: 16,
+  },
+
+  analyzeButton: {
+    minHeight: 52,
+    borderRadius: 14,
+    backgroundColor: "#111",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+
+  analyzeButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#fff",
+  },
+
+  errorText: {
+    marginTop: 12,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#a33",
   },
 
   section: {

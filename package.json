@@ -9,6 +9,8 @@
   "scripts": {
     "mobile": "npm run start --workspace=mobile",
     "mobile:android": "npm run android --workspace=mobile",
-    "mobile:web": "npm run web --workspace=mobile"
+    "mobile:web": "npm run web --workspace=mobile",
+    "api": "npm run dev --workspace=api",
+    "api:typecheck": "npm run typecheck --workspace=api"
   }
 }

@@ -58,7 +58,7 @@ export default function OnboardingScreen() {
     try {
       await saveUserDirection(db, statement);
 
-      router.replace("/today");
+      router.replace("/direction-setup");
     } finally {
       setSaving(false);
     }
