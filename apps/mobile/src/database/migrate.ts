@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 3;
 
 type UserVersionRow = {
   user_version: number;
@@ -26,14 +26,6 @@ export async function migrateDatabase(
   let currentVersion =
     versionResult?.user_version ?? 0;
 
-  /*
-   * VERSION 1
-   *
-   * Original user direction table.
-   *
-   * Existing Step 2 databases already have this
-   * table, so CREATE TABLE IF NOT EXISTS is safe.
-   */
   if (currentVersion < 1) {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS user_direction (
@@ -51,13 +43,6 @@ export async function migrateDatabase(
     currentVersion = 1;
   }
 
-  /*
-   * VERSION 2
-   *
-   * Adds:
-   * - model confirmation
-   * - structured direction items
-   */
   if (currentVersion < 2) {
     const columns =
       await db.getAllAsync<TableColumn>(
@@ -119,6 +104,142 @@ export async function migrateDatabase(
         kind,
         status,
         sort_order
+      );
+    `);
+
+    await db.execAsync(
+      "PRAGMA user_version = 2;"
+    );
+
+    currentVersion = 2;
+  }
+
+  if (currentVersion < 3) {
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS promises (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        direction_item_id INTEGER,
+
+        title TEXT NOT NULL,
+        why TEXT,
+
+        target_kind TEXT NOT NULL
+          CHECK (
+            target_kind IN (
+              'duration',
+              'count',
+              'action'
+            )
+          ),
+
+        target_description TEXT NOT NULL,
+        target_amount REAL,
+        target_unit TEXT,
+
+        minimum_kind TEXT NOT NULL
+          CHECK (
+            minimum_kind IN (
+              'duration',
+              'count',
+              'action'
+            )
+          ),
+
+        minimum_description TEXT NOT NULL,
+        minimum_amount REAL,
+        minimum_unit TEXT,
+
+        scheduled_date TEXT NOT NULL,
+        scheduled_time TEXT,
+
+        status TEXT NOT NULL DEFAULT 'planned'
+          CHECK (
+            status IN (
+              'planned',
+              'active',
+              'kept',
+              'missed',
+              'cancelled'
+            )
+          ),
+
+        started_at TEXT,
+        minimum_reached_at TEXT,
+        target_reached_at TEXT,
+        missed_at TEXT,
+        cancelled_at TEXT,
+
+        failure_reason TEXT
+          CHECK (
+            failure_reason IS NULL OR
+            failure_reason IN (
+              'too_ambitious',
+              'forgot',
+              'plans_changed',
+              'avoided',
+              'unexpected_event',
+              'chose_something_else',
+              'other'
+            )
+          ),
+
+        failure_note TEXT,
+
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+
+        FOREIGN KEY (direction_item_id)
+          REFERENCES direction_items(id)
+          ON DELETE SET NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS
+        idx_promises_date_status
+      ON promises (
+        scheduled_date,
+        status
+      );
+
+      CREATE INDEX IF NOT EXISTS
+        idx_promises_direction
+      ON promises (
+        direction_item_id
+      );
+
+      CREATE TABLE IF NOT EXISTS behavior_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        type TEXT NOT NULL,
+
+        promise_id INTEGER,
+        direction_item_id INTEGER,
+
+        metadata_json TEXT NOT NULL DEFAULT '{}',
+
+        occurred_at TEXT NOT NULL,
+
+        FOREIGN KEY (promise_id)
+          REFERENCES promises(id)
+          ON DELETE SET NULL,
+
+        FOREIGN KEY (direction_item_id)
+          REFERENCES direction_items(id)
+          ON DELETE SET NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS
+        idx_behavior_events_promise
+      ON behavior_events (
+        promise_id,
+        occurred_at
+      );
+
+      CREATE INDEX IF NOT EXISTS
+        idx_behavior_events_type_time
+      ON behavior_events (
+        type,
+        occurred_at
       );
     `);
 
