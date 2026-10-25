@@ -131,7 +131,7 @@ export default function OnboardingScreen() {
         </Text>
 
         <Text style={styles.description}>
-          Don't choose from a list. Tell Alignment,
+          Don&apos;t choose from a list. Tell Alignment,
           in your own words, what you want your life
           to look more like.
         </Text>

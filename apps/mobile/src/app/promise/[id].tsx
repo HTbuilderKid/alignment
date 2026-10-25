@@ -1,3 +1,7 @@
+import { CurrentIntentionCard } from '../../components/CurrentIntentionCard';
+import { executeCommand } from '../../application/commands';
+import { getContextRevision } from '../../database/contextRepository';
+import { commandKey } from '../../utils/contextTime';
 import type {
   AlignmentPromise,
   BehaviorEvent,
@@ -38,11 +42,9 @@ import {
 import {
   cancelPromise,
   getPromiseById,
-  markMinimumReached,
   markPromiseMissed,
   markTargetReached,
   reducePromiseMinimum,
-  startPromise,
 } from "../../database/promiseRepository";
 
 type FailureOption = {
@@ -185,9 +187,7 @@ export default function PromiseDetailScreen() {
     now,
     setNow,
   ] =
-    useState(
-      Date.now()
-    );
+    useState(() => Date.now());
 
   const refresh =
     useCallback(
@@ -216,6 +216,7 @@ export default function PromiseDetailScreen() {
             ),
           ]);
 
+        setNow(Date.now());
         setPromise(
           savedPromise
         );
@@ -268,10 +269,6 @@ export default function PromiseDetailScreen() {
     ) {
       return;
     }
-
-    setNow(
-      Date.now()
-    );
 
     const interval =
       setInterval(
@@ -570,17 +567,20 @@ export default function PromiseDetailScreen() {
               : "Start this promise"
           }
           disabled={busy}
-          onPress={() =>
-            run(() =>
-              startPromise(
-                db,
-
-                currentPromise.id
-              )
-            )
-          }
+          onPress={() => router.push({ pathname: '/context', params: { promiseId: String(currentPromise.id) } })}
         />
       )}
+
+      <CurrentIntentionCard key={currentPromise.updatedAt} />
+      {canAct && currentPromise.status !== 'planned' && (
+        <PrimaryButton label="Work on this now" disabled={busy}
+          onPress={() => router.push({ pathname: '/context', params: { promiseId: String(currentPromise.id) } })} />
+      )}
+      {canAct && !currentPromise.minimumReachedAt && currentPromise.status !== 'planned' && (
+        <PrimaryButton label="Minimum reached — switch to leisure" disabled={busy}
+          onPress={() => router.push({ pathname: '/context', params: { promiseId: String(currentPromise.id), completeMinimum: 'yes' } })} />
+      )}
+      {currentPromise.minimumReachedAt && <Text>Promise kept. Continuing is optional. Your current intention continues until you change it or its freshness checkpoint passes.</Text>}
 
       {canAct &&
         !currentPromise
@@ -599,11 +599,10 @@ export default function PromiseDetailScreen() {
             }
             onPress={() =>
               run(() =>
-                markMinimumReached(
-                  db,
-
-                  currentPromise.id
-                )
+                getContextRevision(db).then(revision => executeCommand(db, {
+                  commandKey: commandKey(), expectedContextRevision: revision,
+                  command: { kind: 'ReachPromiseMinimum', promiseId: currentPromise.id },
+                })).then(() => undefined)
               )
             }
           />
@@ -757,7 +756,7 @@ export default function PromiseDetailScreen() {
                 styles.secondaryButtonText
               }
             >
-              I didn't keep this one
+              I didn&apos;t keep this one
             </Text>
           </Pressable>
         )}

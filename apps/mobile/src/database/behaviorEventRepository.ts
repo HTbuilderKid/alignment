@@ -1,3 +1,4 @@
+import { coordinated, databaseNow, commandIdFor } from './coordinator';
 import type {
   BehaviorEvent,
   BehaviorEventType,
@@ -19,6 +20,8 @@ type BehaviorEventRow = {
   metadata_json: string;
 
   occurred_at: string;
+  recorded_at: string | null;
+  command_id: number | null;
 };
 
 function parseMetadata(
@@ -67,10 +70,12 @@ function mapBehaviorEvent(
 
     occurredAt:
       row.occurred_at,
+    recordedAt: row.recorded_at,
+    commandId: row.command_id,
   };
 }
 
-export async function recordBehaviorEvent(
+async function recordBehaviorEventImpl(
   db: SQLiteDatabase,
   input: {
     type: BehaviorEventType;
@@ -93,9 +98,9 @@ export async function recordBehaviorEvent(
         promise_id,
         direction_item_id,
         metadata_json,
-        occurred_at
+        occurred_at, recorded_at, command_id
       )
-      VALUES (?, ?, ?, ?, ?);
+      VALUES (?, ?, ?, ?, ?, ?, ?);
     `,
 
     input.type,
@@ -109,11 +114,13 @@ export async function recordBehaviorEvent(
     ),
 
     input.occurredAt ??
-      new Date().toISOString()
+      new Date(databaseNow(db)).toISOString(),
+    new Date(databaseNow(db)).toISOString(),
+    commandIdFor(db)
   );
 }
 
-export async function getBehaviorEventsForPromise(
+async function getBehaviorEventsForPromiseImpl(
   db: SQLiteDatabase,
   promiseId: number
 ): Promise<BehaviorEvent[]> {
@@ -128,7 +135,7 @@ export async function getBehaviorEventsForPromise(
           promise_id,
           direction_item_id,
           metadata_json,
-          occurred_at
+          occurred_at, recorded_at, command_id
         FROM behavior_events
         WHERE promise_id = ?
         ORDER BY
@@ -143,3 +150,5 @@ export async function getBehaviorEventsForPromise(
     mapBehaviorEvent
   );
 }
+export const recordBehaviorEvent = coordinated(recordBehaviorEventImpl);
+export const getBehaviorEventsForPromise = coordinated(getBehaviorEventsForPromiseImpl);

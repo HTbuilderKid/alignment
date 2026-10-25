@@ -353,7 +353,7 @@ export default function NewPromiseScreen() {
           Make it concrete. The
           minimum is what counts as
           keeping the promise; the
-          target is what you'd ideally
+          target is what you&apos;d ideally
           like to do.
         </Text>
 
