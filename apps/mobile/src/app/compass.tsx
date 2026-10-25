@@ -60,7 +60,17 @@ export default function CompassScreen() {
   }
 
   useEffect(() => {
-    refresh();
+    let active = true;
+    // Apply the asynchronous query result only while this screen is mounted.
+    getDirectionModel(db).then((model) => {
+      if (active && model) {
+        setDirection(model.direction);
+        setItems(model.items);
+      }
+    }).catch((error) => {
+      if (active) console.error("Could not load Compass", error);
+    });
+    return () => { active = false; };
   }, [db]);
 
   async function handleAdd(
@@ -141,7 +151,7 @@ export default function CompassScreen() {
       </Text>
 
       <Text style={styles.title}>
-        Where you're trying to go
+        Where you&apos;re trying to go
       </Text>
 
       {direction && (

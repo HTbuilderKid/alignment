@@ -1,3 +1,4 @@
+import { coordinated, databaseNow } from './coordinator';
 import type { UserDirection } from "@alignment/types";
 import type { SQLiteDatabase } from "expo-sqlite";
 
@@ -12,7 +13,7 @@ type UserDirectionRow = {
   updated_at: string;
 };
 
-export async function getUserDirection(
+async function getUserDirectionImpl(
   db: SQLiteDatabase
 ): Promise<UserDirection | null> {
   const row =
@@ -46,11 +47,11 @@ export async function getUserDirection(
   };
 }
 
-export async function saveUserDirection(
+async function saveUserDirectionImpl(
   db: SQLiteDatabase,
   statement: string
 ): Promise<void> {
-  const now = new Date().toISOString();
+  const now = new Date(databaseNow(db)).toISOString();
 
   await db.runAsync(
     `
@@ -80,3 +81,5 @@ export async function saveUserDirection(
     now
   );
 }
+export const getUserDirection = coordinated(getUserDirectionImpl);
+export const saveUserDirection = coordinated(saveUserDirectionImpl);

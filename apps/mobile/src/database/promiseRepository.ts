@@ -1,3 +1,4 @@
+import { coordinated, databaseNow } from './coordinator';
 import type {
   AlignmentPromise,
   CreatePromiseInput,
@@ -207,7 +208,7 @@ function cleanMeasure(
   };
 }
 
-export async function createPromise(
+async function createPromiseImpl(
   db: SQLiteDatabase,
   input: CreatePromiseInput
 ): Promise<number> {
@@ -244,7 +245,7 @@ export async function createPromise(
   }
 
   const now =
-    new Date().toISOString();
+    new Date(databaseNow(db)).toISOString();
 
   let promiseId = 0;
 
@@ -349,7 +350,7 @@ export async function createPromise(
   return promiseId;
 }
 
-export async function getPromiseById(
+async function getPromiseByIdImpl(
   db: SQLiteDatabase,
   id: number
 ): Promise<AlignmentPromise | null> {
@@ -371,7 +372,7 @@ export async function getPromiseById(
     : null;
 }
 
-export async function getPromisesForDate(
+async function getPromisesForDateImpl(
   db: SQLiteDatabase,
   scheduledDate: string
 ): Promise<AlignmentPromise[]> {
@@ -408,7 +409,7 @@ export async function getPromisesForDate(
   );
 }
 
-export async function startPromise(
+async function startPromiseImpl(
   db: SQLiteDatabase,
   id: number
 ): Promise<void> {
@@ -426,7 +427,7 @@ export async function startPromise(
   }
 
   const now =
-    new Date().toISOString();
+    new Date(databaseNow(db)).toISOString();
 
   await db.withTransactionAsync(
     async () => {
@@ -472,7 +473,7 @@ export async function startPromise(
   );
 }
 
-export async function markMinimumReached(
+async function markMinimumReachedImpl(
   db: SQLiteDatabase,
   id: number
 ): Promise<void> {
@@ -492,7 +493,7 @@ export async function markMinimumReached(
   }
 
   const now =
-    new Date().toISOString();
+    new Date(databaseNow(db)).toISOString();
 
   await db.withTransactionAsync(
     async () => {
@@ -539,7 +540,7 @@ export async function markMinimumReached(
   );
 }
 
-export async function markTargetReached(
+async function markTargetReachedImpl(
   db: SQLiteDatabase,
   id: number
 ): Promise<void> {
@@ -559,7 +560,7 @@ export async function markTargetReached(
   }
 
   const now =
-    new Date().toISOString();
+    new Date(databaseNow(db)).toISOString();
 
   await db.withTransactionAsync(
     async () => {
@@ -654,7 +655,7 @@ export async function markTargetReached(
   );
 }
 
-export async function markPromiseMissed(
+async function markPromiseMissedImpl(
   db: SQLiteDatabase,
   id: number,
   reason: PromiseFailureReason,
@@ -675,7 +676,7 @@ export async function markPromiseMissed(
   }
 
   const now =
-    new Date().toISOString();
+    new Date(databaseNow(db)).toISOString();
 
   await db.withTransactionAsync(
     async () => {
@@ -731,7 +732,7 @@ export async function markPromiseMissed(
   );
 }
 
-export async function cancelPromise(
+async function cancelPromiseImpl(
   db: SQLiteDatabase,
   id: number
 ): Promise<void> {
@@ -751,7 +752,7 @@ export async function cancelPromise(
   }
 
   const now =
-    new Date().toISOString();
+    new Date(databaseNow(db)).toISOString();
 
   await db.withTransactionAsync(
     async () => {
@@ -793,7 +794,7 @@ export async function cancelPromise(
   );
 }
 
-export async function reducePromiseMinimum(
+async function reducePromiseMinimumImpl(
   db: SQLiteDatabase,
   id: number,
   nextMinimum: PromiseMeasure
@@ -835,7 +836,7 @@ export async function reducePromiseMinimum(
   }
 
   const now =
-    new Date().toISOString();
+    new Date(databaseNow(db)).toISOString();
 
   await db.withTransactionAsync(
     async () => {
@@ -891,3 +892,12 @@ export async function reducePromiseMinimum(
     }
   );
 }
+export const createPromise = coordinated(createPromiseImpl);
+export const getPromiseById = coordinated(getPromiseByIdImpl);
+export const getPromisesForDate = coordinated(getPromisesForDateImpl);
+export const startPromise = coordinated(startPromiseImpl);
+export const markMinimumReached = coordinated(markMinimumReachedImpl);
+export const markTargetReached = coordinated(markTargetReachedImpl);
+export const markPromiseMissed = coordinated(markPromiseMissedImpl);
+export const cancelPromise = coordinated(cancelPromiseImpl);
+export const reducePromiseMinimum = coordinated(reducePromiseMinimumImpl);

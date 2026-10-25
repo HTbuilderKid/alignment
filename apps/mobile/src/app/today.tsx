@@ -1,3 +1,4 @@
+import { CurrentIntentionCard } from '../components/CurrentIntentionCard';
 import type {
   AlignmentPromise,
   UserDirection,
@@ -136,6 +137,8 @@ export default function TodayScreen() {
         Alignment
       </Text>
 
+      <CurrentIntentionCard />
+
       <View
         style={
           styles.promiseHeader
@@ -266,7 +269,7 @@ export default function TodayScreen() {
               styles.reliabilityLabel
             }
           >
-            TODAY'S FOLLOW-THROUGH
+            TODAY&apos;S FOLLOW-THROUGH
           </Text>
 
           <Text
@@ -286,7 +289,7 @@ export default function TodayScreen() {
           styles.sectionLabel
         }
       >
-        WHAT YOU'RE WORKING TOWARD
+        WHAT YOU&apos;RE WORKING TOWARD
       </Text>
 
       {direction ? (

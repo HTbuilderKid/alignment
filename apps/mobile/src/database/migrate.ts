@@ -1,6 +1,8 @@
+import { initializeDatabase, withDatabaseTransaction } from './coordinator';
+import { migrationV4 } from './migrationV4';
 import type { SQLiteDatabase } from "expo-sqlite";
 
-const DATABASE_VERSION = 3;
+const DATABASE_VERSION = 4;
 
 type UserVersionRow = {
   user_version: number;
@@ -10,14 +12,9 @@ type TableColumn = {
   name: string;
 };
 
-export async function migrateDatabase(
+async function migrateVersions(
   db: SQLiteDatabase
 ): Promise<void> {
-  await db.execAsync(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA foreign_keys = ON;
-  `);
-
   const versionResult =
     await db.getFirstAsync<UserVersionRow>(
       "PRAGMA user_version;"
@@ -244,7 +241,22 @@ export async function migrateDatabase(
     `);
 
     await db.execAsync(
-      `PRAGMA user_version = ${DATABASE_VERSION};`
+      "PRAGMA user_version = 3;"
     );
+    currentVersion = 3;
   }
+  if (currentVersion < 4) {
+    await withDatabaseTransaction(db, async tx => {
+      await tx.execAsync(migrationV4);
+      await tx.execAsync(`PRAGMA user_version = ${DATABASE_VERSION};`);
+    });
+  }
+}
+
+export async function migrateDatabase(db: SQLiteDatabase): Promise<void> {
+  // Initialization is completed before SQLiteProvider renders consumers.
+  await initializeDatabase(db, async () => {
+    await db.execAsync('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+  });
+  await migrateVersions(db);
 }

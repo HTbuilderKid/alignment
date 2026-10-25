@@ -1,0 +1,191 @@
+// Frozen schema emitted by the original Step 5 migration.
+export const legacyV3Schema = String.raw`
+    PRAGMA journal_mode = WAL;
+    PRAGMA foreign_keys = ON;
+  
+
+      CREATE TABLE IF NOT EXISTS user_direction (
+        id INTEGER PRIMARY KEY,
+        statement TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    
+PRAGMA user_version = 1;
+
+        ALTER TABLE user_direction
+        ADD COLUMN model_confirmed_at TEXT;
+      
+
+      CREATE TABLE IF NOT EXISTS direction_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        user_direction_id INTEGER NOT NULL,
+
+        kind TEXT NOT NULL
+          CHECK (
+            kind IN ('toward', 'reduce')
+          ),
+
+        title TEXT NOT NULL,
+
+        description TEXT,
+
+        status TEXT NOT NULL DEFAULT 'active'
+          CHECK (
+            status IN (
+              'active',
+              'paused',
+              'completed',
+              'removed'
+            )
+          ),
+
+        sort_order INTEGER NOT NULL DEFAULT 0,
+
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+
+        FOREIGN KEY (user_direction_id)
+          REFERENCES user_direction(id)
+          ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS
+        idx_direction_items_lookup
+      ON direction_items (
+        user_direction_id,
+        kind,
+        status,
+        sort_order
+      );
+    
+PRAGMA user_version = 2;
+
+      CREATE TABLE IF NOT EXISTS promises (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        direction_item_id INTEGER,
+
+        title TEXT NOT NULL,
+        why TEXT,
+
+        target_kind TEXT NOT NULL
+          CHECK (
+            target_kind IN (
+              'duration',
+              'count',
+              'action'
+            )
+          ),
+
+        target_description TEXT NOT NULL,
+        target_amount REAL,
+        target_unit TEXT,
+
+        minimum_kind TEXT NOT NULL
+          CHECK (
+            minimum_kind IN (
+              'duration',
+              'count',
+              'action'
+            )
+          ),
+
+        minimum_description TEXT NOT NULL,
+        minimum_amount REAL,
+        minimum_unit TEXT,
+
+        scheduled_date TEXT NOT NULL,
+        scheduled_time TEXT,
+
+        status TEXT NOT NULL DEFAULT 'planned'
+          CHECK (
+            status IN (
+              'planned',
+              'active',
+              'kept',
+              'missed',
+              'cancelled'
+            )
+          ),
+
+        started_at TEXT,
+        minimum_reached_at TEXT,
+        target_reached_at TEXT,
+        missed_at TEXT,
+        cancelled_at TEXT,
+
+        failure_reason TEXT
+          CHECK (
+            failure_reason IS NULL OR
+            failure_reason IN (
+              'too_ambitious',
+              'forgot',
+              'plans_changed',
+              'avoided',
+              'unexpected_event',
+              'chose_something_else',
+              'other'
+            )
+          ),
+
+        failure_note TEXT,
+
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+
+        FOREIGN KEY (direction_item_id)
+          REFERENCES direction_items(id)
+          ON DELETE SET NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS
+        idx_promises_date_status
+      ON promises (
+        scheduled_date,
+        status
+      );
+
+      CREATE INDEX IF NOT EXISTS
+        idx_promises_direction
+      ON promises (
+        direction_item_id
+      );
+
+      CREATE TABLE IF NOT EXISTS behavior_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        type TEXT NOT NULL,
+
+        promise_id INTEGER,
+        direction_item_id INTEGER,
+
+        metadata_json TEXT NOT NULL DEFAULT '{}',
+
+        occurred_at TEXT NOT NULL,
+
+        FOREIGN KEY (promise_id)
+          REFERENCES promises(id)
+          ON DELETE SET NULL,
+
+        FOREIGN KEY (direction_item_id)
+          REFERENCES direction_items(id)
+          ON DELETE SET NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS
+        idx_behavior_events_promise
+      ON behavior_events (
+        promise_id,
+        occurred_at
+      );
+
+      CREATE INDEX IF NOT EXISTS
+        idx_behavior_events_type_time
+      ON behavior_events (
+        type,
+        occurred_at
+      );
+    
+PRAGMA user_version = 3;`;

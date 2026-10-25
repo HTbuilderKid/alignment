@@ -11,6 +11,13 @@
     "mobile:android": "npm run android --workspace=mobile",
     "mobile:web": "npm run web --workspace=mobile",
     "api": "npm run dev --workspace=api",
-    "api:typecheck": "npm run typecheck --workspace=api"
+    "api:typecheck": "npm run typecheck --workspace=api",
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "npm run api:typecheck && tsc --noEmit -p apps/mobile/tsconfig.json && tsc --noEmit -p packages/alignment-engine/tsconfig.json && tsc --noEmit -p packages/types/tsconfig.json && tsc --noEmit -p packages/schemas/tsconfig.json",
+    "test:web": "node tests/browser.cjs",
+    "lint": "npm run lint --workspace=mobile"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
   }
 }

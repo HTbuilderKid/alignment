@@ -1,3 +1,4 @@
+import { coordinated, databaseNow } from './coordinator';
 import type {
   DirectionDraft,
   DirectionItem,
@@ -53,7 +54,7 @@ function mapDirectionItem(
   };
 }
 
-export async function getDirectionItems(
+async function getDirectionItemsImpl(
   db: SQLiteDatabase
 ): Promise<DirectionItem[]> {
   const rows =
@@ -83,7 +84,7 @@ export async function getDirectionItems(
   return rows.map(mapDirectionItem);
 }
 
-export async function getDirectionModel(
+async function getDirectionModelImpl(
   db: SQLiteDatabase
 ): Promise<DirectionModel | null> {
   const direction =
@@ -102,7 +103,7 @@ export async function getDirectionModel(
   };
 }
 
-export async function saveConfirmedDirectionModel(
+async function saveConfirmedDirectionModelImpl(
   db: SQLiteDatabase,
   drafts: DirectionDraft[]
 ): Promise<void> {
@@ -129,7 +130,7 @@ export async function saveConfirmedDirectionModel(
     );
   }
 
-  const now = new Date().toISOString();
+  const now = new Date(databaseNow(db)).toISOString();
 
   await db.withTransactionAsync(
     async () => {
@@ -206,7 +207,7 @@ export async function saveConfirmedDirectionModel(
   );
 }
 
-export async function addDirectionItem(
+async function addDirectionItemImpl(
   db: SQLiteDatabase,
   kind: DirectionKind,
   title: string
@@ -217,7 +218,7 @@ export async function addDirectionItem(
     return;
   }
 
-  const now = new Date().toISOString();
+  const now = new Date(databaseNow(db)).toISOString();
 
   const order =
     await db.getFirstAsync<{
@@ -278,7 +279,7 @@ export async function addDirectionItem(
   );
 }
 
-export async function renameDirectionItem(
+async function renameDirectionItemImpl(
   db: SQLiteDatabase,
   id: number,
   title: string
@@ -291,7 +292,7 @@ export async function renameDirectionItem(
     );
   }
 
-  const now = new Date().toISOString();
+  const now = new Date(databaseNow(db)).toISOString();
 
   await db.runAsync(
     `
@@ -307,12 +308,12 @@ export async function renameDirectionItem(
   );
 }
 
-export async function setDirectionItemStatus(
+async function setDirectionItemStatusImpl(
   db: SQLiteDatabase,
   id: number,
   status: DirectionStatus
 ): Promise<void> {
-  const now = new Date().toISOString();
+  const now = new Date(databaseNow(db)).toISOString();
 
   await db.runAsync(
     `
@@ -327,3 +328,9 @@ export async function setDirectionItemStatus(
     id
   );
 }
+export const getDirectionItems = coordinated(getDirectionItemsImpl);
+export const getDirectionModel = coordinated(getDirectionModelImpl);
+export const saveConfirmedDirectionModel = coordinated(saveConfirmedDirectionModelImpl);
+export const addDirectionItem = coordinated(addDirectionItemImpl);
+export const renameDirectionItem = coordinated(renameDirectionItemImpl);
+export const setDirectionItemStatus = coordinated(setDirectionItemStatusImpl);
