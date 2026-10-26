@@ -70,3 +70,7 @@ For native validation, run the same `runPersistenceContract` against `openDataba
 Android usage observation, scheduled context activation, deadline scoring, autonomous interventions, notifications, AI behavior analysis, and simultaneous independently enforced contexts are outside Step 6.
 
 For Windows setup, source transfer, and phone testing, see [Run on Windows](RUN_ON_WINDOWS.md).
+
+## Browser storage ownership
+
+`AppDatabaseProvider.web.tsx` acquires an origin-scoped Web Lock before mounting Expo SQLite. The lease belongs to the document and is retained until document destruction, because closing a SQLite connection does not release Expo's worker-wide OPFS file-handle pool. It must not be released on React unmount or tab hiding. The native provider is unchanged. Legacy-worker startup conflicts produce a recovery screen with an explicit reload; no file is deleted, renamed, or replaced. Run `npm run test:web:locks` with Metro running to validate same-profile tabs, ownership transfer on reload, repeated reloads, and recovery without data loss.

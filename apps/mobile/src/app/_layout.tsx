@@ -1,15 +1,10 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { SQLiteProvider } from "expo-sqlite";
-
-import { migrateDatabase } from "../database/migrate";
+import { AppDatabaseProvider } from "../components/AppDatabaseProvider";
 
 export default function RootLayout() {
   return (
-    <SQLiteProvider
-      databaseName="alignment.db"
-      onInit={migrateDatabase}
-    >
+    <AppDatabaseProvider>
       <StatusBar style="auto" />
 
       <Stack
@@ -17,6 +12,6 @@ export default function RootLayout() {
           headerShown: false,
         }}
       />
-    </SQLiteProvider>
+    </AppDatabaseProvider>
   );
 }

@@ -98,3 +98,19 @@ Restart Expo after changing the mobile `.env`. The API listens on port 3001 by d
 8. Close and reopen the app. Fresh context should restore; expired context should not be treated as current.
 
 Native device validation remains a manual check. The cloud environment verified Node tests, Expo SQLite's web adapter, and the browser workflow.
+
+## Browser database lock on reload or in another tab
+
+Expo SQLite's web backend holds exclusive file handles while its worker is alive. Use one active Alignment tab per browser profile and address. The updated app makes additional tabs wait before opening SQLite; closing the active tab allows a waiting tab to continue automatically. Reloading an active tab can give an already-waiting tab ownership first.
+
+If an older tab still holds the storage without participating in that coordination, the app shows “Local data is still in use.” Close the other Alignment tabs at that address, wait a few seconds, and use “Try again.” If needed, close and reopen the browser. **Do not clear site data**: that is where the goals and promises live. Restarting Metro alone does not release a browser worker's file handles.
+
+The database file, port-specific storage, and schema are unchanged by this recovery feature. Native SQLite keeps its existing provider path.
+
+With Metro running, the cross-tab and repeated-reload regression test is:
+
+```powershell
+npm run test:web:locks
+```
+
+It uses a fresh browser profile, including tests that an older uncoordinated worker produces a recovery screen and that the original direction and kept promise survive retry.
