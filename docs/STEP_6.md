@@ -1,5 +1,7 @@
 # Step 6: Context and drift foundation
 
+The dependency cleanup, verification record, and remaining upstream advisories are recorded in the [Step 6 checkpoint](STEP_6_CHECKPOINT.md).
+
 Step 6 separates a Promise obligation from the user's present intention. A kept minimum never ends a context or makes the target obligatory. Activity, leisure, and open time are equally legitimate declarations. Unregistered time is unknown, not drift.
 
 ## Using the feature
