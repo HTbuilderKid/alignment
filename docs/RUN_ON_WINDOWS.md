@@ -104,7 +104,7 @@ Restart Expo after changing the mobile `.env`. The API listens on port 3001 by d
 7. Correct a past intention with a different effective time. Confirm the historical period is shown separately from the time the correction was recorded.
 8. Close and reopen the app. Fresh context should restore; expired context should not be treated as current.
 
-Native device validation remains a manual check. The user reported successful device checks before the dependency cleanup. After installing the cleanup, repeat a brief smoke test: launch, start a Promise, reach its minimum while intention continues, switch to leisure, and close/reopen to confirm persistence. The cloud environment cannot perform that device check.
+Native device validation remains a manual check. The user confirmed successful Android testing after installing dependency-cleanup commit `40bcf11`. After future dependency updates, repeat a brief smoke test: launch, start a Promise, reach its minimum while intention continues, switch to leisure, and close/reopen to confirm persistence. The cloud environment cannot perform that device check.
 
 ## Browser database lock on reload or in another tab
 

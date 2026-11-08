@@ -2,7 +2,7 @@
 
 Branch: `codex/step6-context-foundation`. The commit introducing this document records the dependency-cleanup checkpoint. Step 7 remains deferred.
 
-This is a functional Step 6 checkpoint with known dependency advisories, not a claim of a clean security audit. The user reported successful browser and device checks before this dependency update. A brief Android smoke test of the updated dependencies is still needed; the cloud has no Android device or emulator.
+Step 6 functional validation is complete, with known dependency advisories retained below. The user reported successful browser and device checks before the dependency update and confirmed the Android smoke test passed after installing dependency-cleanup commit `40bcf11`. This is user-reported device validation; the cloud has no Android device or emulator. It does not establish a clean security audit or validate a native production build.
 
 ## Changes
 
@@ -42,4 +42,4 @@ To reproduce the audit, run `npm ci` followed by `npm audit` at the repository r
 
 ## Final device check
 
-After pulling this commit and running `npm ci`, launch on Android and check: start a Promise; reach its minimum while the intention continues; switch to leisure; close and reopen to confirm persistence. Preserve the installed app and its storage. Report any error before changing dependency versions. Instructions are in [Run on Windows](RUN_ON_WINDOWS.md).
+Completed: after updating dependencies with `npm ci` and launching with `npm run mobile`, the user confirmed everything works. The requested smoke test covered starting a Promise, reaching its minimum while the intention continues, switching to leisure, and closing/reopening to confirm persistence. No additional functional blocker was reported. Repeat this check after future dependency changes; instructions are in [Run on Windows](RUN_ON_WINDOWS.md).
